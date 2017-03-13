@@ -22,4 +22,13 @@ public class face {
 	public void setouterComponent(halfedge e){
 		outerComponent = e;
 	}
+	
+	//Getter
+		public halfedge getinnerComponent(){
+			return innerComponent;
+		}
+		
+		public halfedge getouterComponent(){
+			return outerComponent;
+		}
 }

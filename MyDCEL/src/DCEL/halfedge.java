@@ -3,7 +3,6 @@ package DCEL;
 public class halfedge {
 	
 	vertex vertexOrin;
-	vertex vertexTo;
 	
 	halfedge next;
 	halfedge prev;
@@ -15,9 +14,8 @@ public class halfedge {
 	public halfedge(){
 	}
 	
-	public halfedge(vertex orin, vertex to){
+	public halfedge(vertex orin){
 		this.vertexOrin = orin;
-		this.vertexTo = to;
 	}
 	
 	//Setter

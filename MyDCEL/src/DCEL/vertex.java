@@ -1,4 +1,5 @@
 package DCEL;
+import java.util.ArrayList;
 
 public class vertex {
 	protected int index;
@@ -6,9 +7,8 @@ public class vertex {
 	protected double x;
 	protected double y;
 	
-	//Half edge info
-	halfedge halfEdgeOut;
-	halfedge halfEdgeIn;
+	//Half edge info:Incident halfedge
+	ArrayList<halfedge> halfEdgeOut;
 	
 	//Constructor for vertex
 	public vertex(double X, double Y){
@@ -31,25 +31,15 @@ public class vertex {
 	}
 	
 	//Set halfedge
-	public void setHalfEdge(halfedge inE, halfedge outE){
-		this.halfEdgeIn = inE;
-		this.halfEdgeOut = outE;
-	}
-	public void setHalfEdgeOut(halfedge e){
-		this.halfEdgeOut = e;
-	}
-	public void setHalfEdgeIn(halfedge e){
-		this.halfEdgeIn = e;
+	public void setHalfEdge(halfedge outE){
+		this.halfEdgeOut.add(outE);
 	}
 	
 	//Get halfedge	
-	public halfedge getHalfEdgeOut(){
+	public ArrayList<halfedge> getHalfEdgeOut(){
 		return halfEdgeOut;
 	}
-	public halfedge getHalfEdgeIn(){
-		return halfEdgeIn;
-	}
-	
+
 	//vertex operation
 	public boolean equalTo(vertex v){
 		if(this.x == v.x && this.y == v.y)
