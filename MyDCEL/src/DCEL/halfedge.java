@@ -1,6 +1,6 @@
 package DCEL;
 
-public class halfedge {
+public class halfedge implements Comparable<halfedge>{
 	
 	vertex vertexOrin;
 	
@@ -45,5 +45,14 @@ public class halfedge {
 	}
 	public halfedge getTwinEdge(){
 		return this.twin;
+	}
+	
+	public vertex getOrinVertex(){
+		return this.vertexOrin;
+	}
+	
+	public int compareTo(halfedge he){
+		int toReturn = this.getOrinVertex().compareTo(he.getOrinVertex());
+		return toReturn;
 	}
 }
