@@ -12,8 +12,11 @@
 package AVLTree;
 
 import java.util.LinkedList;
-
 import java.util.Queue;
+
+import DCEL.halfedge;
+import DCEL.vertex;
+
 public class AVLTree<K extends Comparable<K>, V> {
 	private AVLNode<K,V> root;
 	
@@ -94,6 +97,10 @@ public class AVLTree<K extends Comparable<K>, V> {
 		return lookupLeftClosest(root, key);
 	}
 	
+	public AVLNode<K,V> lookupRightClosest(K key) {
+		return lookupRightClosest(root, key);
+	}
+	
 	/**
 	 * This (recursive) helper method retrieves the data corresponding to a given key from a given tree.
 	 * @param n		the root of the tree
@@ -129,29 +136,69 @@ public class AVLTree<K extends Comparable<K>, V> {
 			}			
 		}	
 		
+	}
+	/**
+	 * This (recursive) helper method retrieves the data corresponding to a given key from a given tree.
+	 * @param n		the root of the tree
+	 * @param key	the key of the data to be retrieved
+	 * @return		the node has a key value just to the right of the key, if the key is smaller than all keys then return the smallest key.
+	 */
+	private AVLNode<K,V> lookupRightClosest(AVLNode<K,V> n, K key) {
+		// Base cases
+		if (n == null) return null;
+		if(n.getLeft() == null && n.getRight() == null)
+			return n;
+		if (n.getKey().compareTo(key)==0) return n;
+		
+		// Recursive cases
+		if (key.compareTo(n.getKey()) > 0){
+			if(n.getRight() == null)
+				return n;
+			else
+				return lookupRightClosest(n.getRight(), key);
+		}			
+		else{
+			if(n.getLeft() == null && n.getRight() == null)
+				return n;
+			else{
+				AVLNode<K,V> comparenode = new AVLNode<K,V>();
+				if(lookupRightClosest(n.getLeft(), key).getKey().compareTo(key) < 0)
+					comparenode = lookupRightClosest(n.getRight(), key);
+				else
+					comparenode =  lookupRightClosest(n.getLeft(), key).getKey().compareTo(lookupRightClosest(n.getRight(), key).getKey()) < 0 
+						? lookupRightClosest(n.getLeft(), key): lookupRightClosest(n.getRight(), key);
+				return n.getKey().compareTo(comparenode.getKey()) < 0 ? n : comparenode;
+						
+			}			
+		}	
 		
 	}
-	
-	
 	public void printTree(){
-		root.setHeight(0);
-		Queue<AVLNode<K,V>> queue = new LinkedList<AVLNode<K,V>>();
-		queue.add(root);
-		while (!queue.isEmpty()) {
-			AVLNode<K,V> node = queue.poll();
-			System.out.println(node);
-			int level = node.getHeight();
-			AVLNode<K,V> left = node.getLeft();
-			AVLNode<K,V> right = node.getRight();
-			if (left != null) {
-				left.setHeight(level + 1);
-				queue.add(left);
+		if(root!=null){
+			root.setHeight(0);
+			Queue<AVLNode<K,V>> queue = new LinkedList<AVLNode<K,V>>();
+	
+			queue.add(root);
+			while (!queue.isEmpty()) {
+				AVLNode<K,V> node = queue.poll();
+				System.out.println(node);
+				int level = node.getHeight();
+				AVLNode<K,V> left = node.getLeft();
+				AVLNode<K,V> right = node.getRight();
+				if (left != null) {
+					left.setHeight(level + 1);
+					queue.add(left);
+				}
+				if (right != null) {
+					right.setHeight(level + 1);
+					queue.add(right);
+				}
 			}
-			if (right != null) {
-				right.setHeight(level + 1);
-				queue.add(right);
-			}
-		}
+		}		
+	}
+	//Get the root
+	public AVLNode<K, V> getRoot(){
+		return root;
 	}
 	//Added by Niechen ends
 	/**
