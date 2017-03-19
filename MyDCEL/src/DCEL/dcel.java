@@ -30,53 +30,63 @@ public class dcel {
 		heList.add(he);
 	}
 	
-	public void addHEdge(halfedge he1, halfedge he2){
+	public halfedge addHEdge(halfedge he1, halfedge he2){
+		
+		//Remove old face
+		this.fList.remove(he1.incidentFace);
+		
 		halfedge newHe1 = new halfedge(he1.vertexOrin);
 		halfedge newHe2 = new halfedge(he2.vertexOrin);
 		heList.add(newHe1);
 		heList.add(newHe2);
 		
-		newHe1.setTwinEdge(he2);
-		newHe2.setTwinEdge(he1);
+		newHe1.setTwinEdge(newHe2);
+		newHe2.setTwinEdge(newHe1);
 		
-		//Recreate the topology
-		newHe1.setNextHalfEdge(he1);
-		newHe1.setPrevHalfEdge(he2.getPrevHalfEdge());
-		
-		newHe2.setNextHalfEdge(he2);
-		newHe2.setPrevHalfEdge(he1.getPrevHalfEdge());
-		
-		he1.setPrevHalfEdge(newHe1);
-		he2.setPrevHalfEdge(newHe2);
-		
-		//Remove old face and add new face
-		this.fList.remove(he1.incidentFace);
+		//Recreate the topology for face 1
+		newHe1.setNextHalfEdge(he2);
+		he2.setPrevHalfEdge(newHe1);
 		
 		face newFace1 = new face();
 		fList.add(newFace1);
-		
+
 		newFace1.setinnerComponent(newHe1);
 		newFace1.setouterComponent(newHe2);
+	
+		//Set all the halfedges to its new face
+		halfedge edge1 = new halfedge();
+		edge1 = newHe1;
+		
+		while(edge1.getTwinEdge().getOrinVertex() != newHe1.getOrinVertex()){			
+			edge1.setIncidentFace(newFace1);	
+			edge1 = edge1.getNextHalfEdge();			
+		}
+		edge1.setIncidentFace(newFace1);
+		edge1.setNextHalfEdge(newHe1);
+		newHe1.setPrevHalfEdge(edge1);
+		
+		//Recreate the topology for face 2
+		newHe2.setNextHalfEdge(he1);
+		he1.setPrevHalfEdge(newHe2);
 		
 		face newFace2 = new face();
 		fList.add(newFace2);
 		
 		newFace2.setinnerComponent(newHe2);
-		newFace2.setouterComponent(newHe1);
+		newFace2.setouterComponent(newHe1);		
 		
-		//Set all the halfedges to its new face
-		for(halfedge edge = newHe1; ; edge = edge.getNextHalfEdge()){			
-			edge.setIncidentFace(newFace1);			
-			if(edge == newHe1.getPrevHalfEdge())
-				break;
-		}
 		
-		for(halfedge edge = newHe2; ; edge = edge.getNextHalfEdge()){			
-			edge.setIncidentFace(newFace2);			
-			if(edge == newHe1.getPrevHalfEdge())
-				break;
-		}
+		halfedge edge2  = new halfedge();
+		edge2 = newHe2;
+		while(edge2.getTwinEdge().getOrinVertex() != newHe2.getOrinVertex()){			
+			edge2.setIncidentFace(newFace2);	
+			edge2 = edge2.getNextHalfEdge();			
+		}	
+		edge2.setIncidentFace(newFace2);
+		edge2.setNextHalfEdge(newHe2);
+		newHe2.setPrevHalfEdge(edge2);
 		
+		return newHe1;
 	}
 	
 	//Get face list
@@ -89,7 +99,7 @@ public class dcel {
 		//Check if the list of vertices makes a simple polygon
 		ArrayList<vertex> polygonVList = new ArrayList<vertex>();
 		for(int i = 0; i < vertices.length; i++){
-			polygonVList.add(vList.get(i));
+			polygonVList.add(vList.get(vertices[i]));
 		}
 		if(!checkSimplePolygon(polygonVList)){
 			System.err.println("Exiting, non simple polygon input");
@@ -133,11 +143,11 @@ public class dcel {
 			tempheList2.get((i+1)%tempheList2.size()).setPrevHalfEdge(tempheList2.get(i));
 			
 			//Set twin edge.
-			tempheList2.get(i).setTwinEdge(tempheList2.get((i+tempheList1.size()-1)%tempheList1.size()));
+			tempheList2.get(i).setTwinEdge(tempheList1.get((i+tempheList1.size()-1)%tempheList1.size()));
 		}
 		
 		newFace.setinnerComponent(tempheList1.get(0));
-		newFace.setouterComponent(tempheList1.get(0));
+		newFace.setouterComponent(tempheList2.get(0));
 		
 
 		
@@ -167,6 +177,7 @@ public class dcel {
 					
 		}
 		
+		
 //		AVLTree<vertex, Segment> EventTree = new AVLTree<vertex, Segment>();
 //		for (int i = 0; i < SegList.size(); i++) {
 //			EventTree.insert(SegList.get(i).v1, SegList.get(i));
@@ -187,6 +198,25 @@ public class dcel {
 	      
 		return toReturn;
 	}
+	
+	//Check if a diangonal fro he1 to he2 is inside or outside the polygon
+	//Return true if inside, return false if outside
+	public boolean checkDiagonal(halfedge he1, halfedge he2){		
+		boolean toReturn;
+		
+		double check1 = (he2.getOrinVertex().getX()-he1.getOrinVertex().getX()) * (he2.getNextHalfEdge().getOrinVertex().getY() - he1.getOrinVertex().getY()) - 
+		(he2.getOrinVertex().getY()-he1.getOrinVertex().getY()) * (he2.getNextHalfEdge().getOrinVertex().getX() - he1.getOrinVertex().getX());
+		
+		double check2 = (he2.getPrevHalfEdge().getOrinVertex().getX()-he1.getOrinVertex().getX()) * (he2.getOrinVertex().getY() - he1.getOrinVertex().getY()) - 
+				(he2.getPrevHalfEdge().getOrinVertex().getY()-he1.getOrinVertex().getY()) * (he2.getOrinVertex().getX() - he1.getOrinVertex().getX());
+		
+		if(check1*check2 > 0)
+			toReturn = true;
+		else
+			toReturn = false;
+		return toReturn;
+	}
+	
 	//Return true if intersecing, return false if not intersecting.
 	public boolean checkSegmentIntersection(Segment s1, Segment s2){ 
 		double check1 = (s1.v1.getX()-s2.v2.getX())*(s2.v1.getY()-s2.v2.getY()) - 
@@ -202,5 +232,19 @@ public class dcel {
 			return true;
 		else
 			return false;
+	}
+	
+	public void fixTopology(){
+		for(int i = 0; i < fList.size(); i++){
+			halfedge incidentEdge = fList.get(i).innerComponent;
+			
+			for(halfedge edge = incidentEdge; ; edge=edge.getNextHalfEdge()){
+				
+				edge.getNextHalfEdge().setPrevHalfEdge(edge);
+				
+				if(edge==incidentEdge)
+					break;
+			}
+		}
 	}
 }

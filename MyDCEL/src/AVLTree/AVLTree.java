@@ -119,18 +119,23 @@ public class AVLTree<K extends Comparable<K>, V> {
 			if(n.getLeft() == null)
 				return n;
 			else
-				return lookupLeftClosest(n.getLeft(), key);
+				return lookupLeftClosest(n.getLeft(), key).getKey().compareTo(n.getKey()) > 0 ? lookupLeftClosest(n.getLeft(), key) : n;
 		}			
 		else{
-			if(n.getLeft() == null && n.getRight() == null)
+			if(n.getLeft() == null)
 				return n;
+			else if (n.getRight() == null){
+				return lookupLeftClosest(n.getLeft(), key);
+			}
 			else{
 				AVLNode<K,V> comparenode = new AVLNode<K,V>();
 				if(lookupLeftClosest(n.getRight(), key).getKey().compareTo(key) > 0)
 					comparenode = lookupLeftClosest(n.getLeft(), key);
-				else
+				else{
 					comparenode =  lookupLeftClosest(n.getLeft(), key).getKey().compareTo(lookupLeftClosest(n.getRight(), key).getKey()) > 0 
-						? lookupLeftClosest(n.getLeft(), key): lookupLeftClosest(n.getRight(), key);
+							? lookupLeftClosest(n.getLeft(), key): lookupLeftClosest(n.getRight(), key);
+				}
+					
 				return n.getKey().compareTo(comparenode.getKey()) > 0 ? n : comparenode;
 						
 			}			

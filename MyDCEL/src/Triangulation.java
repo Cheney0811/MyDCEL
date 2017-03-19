@@ -10,8 +10,7 @@ import java.util.Queue;
 
 import AVLTree.*;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Stack;
 
 public class Triangulation {
 
@@ -38,8 +37,7 @@ public class Triangulation {
 		Collections.sort(Event); 
 		
 		//Create an map to store the helper edge for each vertex
-		Map<halfedge, halfedge> helper = new HashMap<>();
-//		Map<halfedge, halfedge> helperMap  = new HashMap<>();	
+		Map<halfedge, halfedge> helper = new HashMap<>();	
 		
 		//Handle all the event vertices
 		for(int i = Event.size() - 1; i >-1; i--){
@@ -54,7 +52,7 @@ public class Triangulation {
 				updateKeyValue(Event.get(i).getOrinVertex(), statusTree);
 				
 				helper.put(Event.get(i), Event.get(i));
-//				helperMap.put(Event.get(i), Event.get(i));
+
 			}		
 			
 			//If the vertex is a end type
@@ -67,10 +65,10 @@ public class Triangulation {
 				
 				halfedge temp = helper.get(Event.get(i).getPrevHalfEdge()); //test code
 				
-				if(helper.get(Event.get(i).getPrevHalfEdge())!=null){
-					if(helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex().getVertexType() == VertexType.Merge){
-						toReturn.addHEdge(Event.get(i), helper.get(Event.get(i).getPrevHalfEdge()));
-					}
+
+				if(helper.get(Event.get(i).getPrevHalfEdge())!=null && 
+						helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex().getVertexType() == VertexType.Merge){
+					toReturn.addHEdge(Event.get(i), helper.get(Event.get(i).getPrevHalfEdge()));
 				}
 				
 				statusTree.delete(getVertexEdgeRelation(Event.get(i).getPrevHalfEdge(), Event.get(i).getOrinVertex()));
@@ -99,13 +97,15 @@ public class Triangulation {
 
 				statusTree.printTree();				//Test code
 				
+				//Temp half edge marks the previous halfedge of the current halfedge
+				double keyToDelete = getVertexEdgeRelation(Event.get(i).getPrevHalfEdge(), Event.get(i).getOrinVertex());
 				if(helper.get(Event.get(i).getPrevHalfEdge())!=null){
+					vertex check = helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex();//Test code
 					if(helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex().getVertexType() == VertexType.Merge){
 						toReturn.addHEdge(Event.get(i), helper.get(Event.get(i).getPrevHalfEdge()));
 					}
 				}				
-				
-				statusTree.delete(getVertexEdgeRelation(Event.get(i).getPrevHalfEdge(), Event.get(i).getOrinVertex()));
+				statusTree.delete(keyToDelete);
 				
 				halfedge tempEdge = statusTree.lookupLeftClosest(Event.get(i).getOrinVertex().getX()).getValue();
 				if(tempEdge.getOrinVertex().getVertexType() == VertexType.Merge)
@@ -120,47 +120,140 @@ public class Triangulation {
 				
 				statusTree.printTree();				//Test code
 				
-				if(Event.get(i).getOrinVertex().getX() >= Event.get(i).getNextHalfEdge().getOrinVertex().getX()){
-					if(helper.get(Event.get(i).getPrevHalfEdge())!=null){
-						if(helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex().getVertexType() == VertexType.Merge){
-							toReturn.addHEdge(Event.get(i), helper.get(Event.get(i).getPrevHalfEdge()));
-							statusTree.delete(getVertexEdgeRelation(Event.get(i).getPrevHalfEdge(), Event.get(i).getOrinVertex()));
-							statusTree.insert(getVertexEdgeRelation(Event.get(i), Event.get(i).getOrinVertex()),Event.get(i));
+				if(Event.get(i).getOrinVertex().getY() >= Event.get(i).getNextHalfEdge().getOrinVertex().getY()){
+					double keyToDelete = getVertexEdgeRelation(Event.get(i).getPrevHalfEdge(), Event.get(i).getOrinVertex());
+					if(helper.get(Event.get(i).getPrevHalfEdge())!=null && 
+							helper.get(Event.get(i).getPrevHalfEdge()).getOrinVertex().getVertexType() == VertexType.Merge){
+						toReturn.addHEdge(Event.get(i), helper.get(Event.get(i).getPrevHalfEdge()));	
+					}
+					statusTree.delete(keyToDelete);
+					statusTree.insert(getVertexEdgeRelation(Event.get(i), Event.get(i).getOrinVertex()),Event.get(i));
 							
-							helper.put( Event.get(i), Event.get(i));
-
-						}
-						
-					}					
-				}
+					helper.put( Event.get(i), Event.get(i));		
+										
+				}	
 				else{
 					halfedge tempEdge = statusTree.lookupLeftClosest(Event.get(i).getOrinVertex().getX()).getValue();
-					if(tempEdge.getOrinVertex().getVertexType() == VertexType.Merge)
+					if(tempEdge.getOrinVertex().getVertexType() == VertexType.Merge){
 						toReturn.addHEdge(Event.get(i), helper.get(tempEdge));
-					
-					helper.put(tempEdge,Event.get(i));
-					
+						
+					}
+					helper.put(tempEdge,Event.get(i));				
 				}
 			}
 		}
-		
-//		//test
-//		while(vertexEvent.size() != 0){
-//			System.out.println(vertexEvent.get(vertexEvent.size() - 1).getX() + " " + vertexEvent.get(vertexEvent.size() - 1).getY() + " " + vertexEvent.size());
-//			vertexEvent.remove(vertexEvent.size() - 1);
-//		}
-	
 		return toReturn;
 	}
 	
 	
-	public dcel triangulateMonotonePolygon(dcel ymonotoPolygon){
+	public dcel triangulateMonotonePolygon(dcel ymonotonePolygon){
 		dcel toReturn = new dcel();
 		
+		toReturn = ymonotonePolygon;
 		
+		ArrayList<face> faces = toReturn.getFaces();
 		
-		
+		int realFindex = 0;
+		for(int i = 0; i < faces.size();){
+			
+			//Set a mark for the current i value
+			int mark = i;
+			
+			//Create vertex event queue with y coordinate as priority
+			ArrayList<halfedge> Event = new ArrayList<halfedge>();
+			
+			halfedge incidentEdge = faces.get(realFindex).getinnerComponent();
+					
+			for(halfedge edge = incidentEdge; ; edge = edge.getNextHalfEdge()){			
+				Event.add(edge);	
+				
+				if(edge == incidentEdge.getPrevHalfEdge())
+					break;
+			}			
+			Collections.sort(Event);
+			//Check which chain each event belongs to -1 means left , 1 means right, 0 means top or bottom
+			Map<vertex,Integer> chainSide = new HashMap<>();
+			halfedge edge = Event.get(0);
+			
+			chainSide.put(edge.getOrinVertex(),0);
+			while(edge.getTwinEdge().getOrinVertex() != Event.get(Event.size()-1).getOrinVertex()){
+				edge = edge.getNextHalfEdge();
+				chainSide.put(edge.getOrinVertex(),1);
+			}
+			edge = edge.getNextHalfEdge();
+			chainSide.put(edge.getOrinVertex(),0);
+			while(edge.getOrinVertex() != Event.get(0).getOrinVertex()){
+				edge = edge.getNextHalfEdge();
+				chainSide.put(edge.getOrinVertex(),-1);
+			}
+			
+			ArrayList<halfedge> S = new ArrayList<halfedge>();
+			S.add(Event.get(Event.size()-1));
+			S.add(Event.get(Event.size()-2));
+			for(int j = 3; j < Event.size(); j++){
+				if(chainSide.get(Event.get(Event.size()- j).getOrinVertex()) * chainSide.get(S.get(S.size()-1).getOrinVertex()) < 0){
+					while(S.size() > 1){
+						halfedge tempHe = S.remove(0);
+						tempHe = S.remove(0);
+						
+						if(S.size() >= 0){
+							halfedge tempHe_New = toReturn.addHEdge(Event.get(Event.size()-j), tempHe).getTwinEdge();
+							Event.set(Event.size() -j + 1, tempHe_New);
+							i++;
+						}										
+						
+					}		
+					S.add(Event.get(Event.size() -j + 1));
+					S.add(Event.get(Event.size() - j));
+				}
+				else{
+					halfedge tempHe = new halfedge();
+					tempHe = S.remove(S.size()-1);
+					while(!S.isEmpty() && toReturn.checkDiagonal(Event.get(Event.size() - j), S.get(S.size()-1))){
+						tempHe = S.remove(S.size()-1);
+						if(chainSide.get(Event.get(Event.size() - j).getOrinVertex()) == -1){
+							halfedge tempHe_New = toReturn.addHEdge(Event.get(Event.size() - j), tempHe).getTwinEdge();							
+							tempHe = tempHe_New;
+						}						
+						else{
+							halfedge tempHe_New = toReturn.addHEdge(Event.get(Event.size() - j), tempHe);
+							Event.set(Event.size() - j, tempHe_New);
+						}
+							
+						i++;
+					}
+					if(tempHe.getOrinVertex()!=null)
+						S.add(tempHe);
+					
+					S.add(Event.get(Event.size() - j));
+				}				
+					
+			}
+			
+			if(S.size() > 2){
+				for( int sIndex = 1; sIndex < S.size()-1; sIndex++){
+					toReturn.addHEdge(Event.get(0), S.get(sIndex));
+					i++;
+				}
+			}
+			if(mark == i){
+				realFindex++;
+
+			}
+			i++;
+		}	 	
+
+	
 		return toReturn;			
+	}
+	
+	public dcel makeTriangulation(dcel simplePolygon){
+		dcel toReturn = new dcel();
+		toReturn = simplePolygon;
+		toReturn = makeMonotone(simplePolygon);
+		toReturn = triangulateMonotonePolygon(toReturn);
+		
+		return toReturn;
 	}
 	
 	public void checkVeretxType(dcel simplePolygon){
@@ -194,6 +287,7 @@ public class Triangulation {
 		}
 	}
 	
+
 	//Get x coordinate of the intersection of an halfedge and a vertical line
 	//Precondition, the edge does intersect with the line.
 	public double getVertexEdgeRelation(halfedge he,vertex v){		
